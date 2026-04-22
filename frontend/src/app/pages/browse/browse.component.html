@@ -1,0 +1,156 @@
+<section class="page browse">
+
+  <div class="masthead">
+    <div class="mast-left">
+      <span class="eyebrow">Vol. 01 · No. 12 · The Marketplace</span>
+      <h1 class="mast-title">
+        Trade what you&nbsp;<em>know</em>,<br>
+        learn what you&nbsp;<em>don't</em>.
+      </h1>
+      <p class="mast-lede">
+        An open directory of people offering and seeking skills —
+        searchable, filterable, entirely barter.
+      </p>
+    </div>
+    <aside class="mast-right">
+      <div class="stat">
+        <span class="stat-num">{{ page()?.count ?? 0 }}</span>
+        <span class="stat-label">listings</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">{{ categories().length }}</span>
+        <span class="stat-label">categories</span>
+      </div>
+    </aside>
+  </div>
+
+  <hr class="rule rule-bold">
+
+  <form class="filters" (submit)="$event.preventDefault(); apply()">
+    <div class="f-row">
+      <div class="f-search">
+        <label>Search</label>
+        <input type="text" [(ngModel)]="q.search" name="search"
+               placeholder="Try: piano, cooking, yoga…">
+      </div>
+
+      <div class="f-field">
+        <label>Kind</label>
+        <select [(ngModel)]="q.kind" name="kind">
+          <option value="">Any</option>
+          <option value="offer">Offers (teach)</option>
+          <option value="request">Requests (learn)</option>
+        </select>
+      </div>
+
+      <div class="f-field">
+        <label>Level</label>
+        <select [(ngModel)]="q.level" name="level">
+          <option value="">Any</option>
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
+      </div>
+
+      <div class="f-field">
+        <label>Category</label>
+        <select [(ngModel)]="q.categorySlug" name="cat">
+          <option value="">All</option>
+          <option *ngFor="let c of categories()" [value]="c.slug">
+            {{ c.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="f-field">
+        <label>Sort</label>
+        <select [(ngModel)]="q.ordering" name="ord">
+          <option *ngFor="let o of orderings" [value]="o.v">
+            {{ o.label }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="f-row f-actions">
+      <label class="f-check">
+        <input type="checkbox" [(ngModel)]="q.remoteOnly" name="rem">
+        <span>Remote only</span>
+      </label>
+      <div class="f-buttons">
+        <button type="button" class="btn btn-outline" (click)="reset()">Reset</button>
+        <button type="submit" class="btn">Apply</button>
+      </div>
+    </div>
+  </form>
+
+  <hr class="rule">
+
+  <div class="status">
+    <span *ngIf="loading()">Loading…</span>
+    <span *ngIf="error() as e" class="err">⚠ {{ e }}</span>
+    <span *ngIf="!loading() && !error() && page() as p">
+      Showing <strong>{{ p.results.length }}</strong> of
+      <strong>{{ p.count }}</strong> listings
+    </span>
+  </div>
+
+  <div class="grid" *ngIf="page() as p">
+    <article *ngFor="let s of p.results" class="card"
+             [class.card-offer]="s.kind === 'offer'"
+             [class.card-request]="s.kind === 'request'">
+
+      <div class="card-top">
+        <span class="tag" [class.tag-offer]="s.kind === 'offer'"
+              [class.tag-request]="s.kind === 'request'">
+          {{ s.kind === 'offer' ? 'Teaching' : 'Learning' }}
+        </span>
+        <span class="meta mono">{{ s.category.name }}</span>
+      </div>
+
+      <h2 class="card-title">{{ s.title }}</h2>
+      <p class="card-body" *ngIf="s.description">{{ s.description }}</p>
+
+      <div class="card-meta">
+        <span class="pill">{{ s.level_display }}</span>
+        <span class="pill" *ngIf="s.is_remote">Remote</span>
+        <span class="pill" *ngIf="!s.is_remote">In person</span>
+      </div>
+
+      <hr class="card-rule">
+
+      <div class="card-owner">
+        <span class="avatar" [style.background]="s.owner.avatar_color">
+          {{ initials(s.owner) }}
+        </span>
+        <span class="owner-name">
+          <em>{{ s.owner.first_name }} {{ s.owner.last_name }}</em>
+          <span class="owner-handle">{{ '@' + s.owner.username }}</span>
+        </span>
+      </div>
+    </article>
+
+    <div class="empty" *ngIf="p.results.length === 0">
+      <p class="empty-lead">No listings match.</p>
+      <p>Try loosening the filters or searching for something else.</p>
+    </div>
+  </div>
+
+  <nav class="pager" *ngIf="page() && totalPages > 1">
+    <button class="btn btn-outline"
+            [disabled]="!page()?.previous"
+            (click)="go(q.page! - 1)">← Prev</button>
+
+    <span class="pager-pages">
+      <button *ngFor="let n of pageNumbers"
+              class="page-num"
+              [class.active]="n === q.page"
+              (click)="go(n)">{{ n }}</button>
+    </span>
+
+    <button class="btn btn-outline"
+            [disabled]="!page()?.next"
+            (click)="go(q.page! + 1)">Next →</button>
+  </nav>
+</section>
